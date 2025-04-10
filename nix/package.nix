@@ -8,16 +8,36 @@
 let
   mixNixDeps = import ./deps.nix { inherit lib beamPackages; };
 
-  autumnus_nif = pkgs.rustPlatform.buildRustPackage {
-    pname = "autumnus_nif";
-    version = "0.1.0";
-    src = ../native/autumnus_nif;
-    cargoLock.lockFile = ../native/autumnus_nif/Cargo.lock;
+  cargoToml = builtins.fromTOML (builtins.readFile ../native/autumnus_nif/Cargo.toml);
+  version = cargoToml.package.version;
+
+  rustPlatform = pkgs.makeRustPlatform {
+    cargo = rust;
+    rustc = rust;
   };
+
+  autumnus_nif = rustPlatform.buildRustPackage {
+    pname = "autumnus_nif";
+    inherit version;
+    src = ../native/autumnus_nif;
+    cargoLock = {
+      lockFile = ../native/autumnus_nif/Cargo.lock;
+      outputHashes = {
+        "autumnus-0.4.0" = "sha256-YyT9TQ5rtTohIuK/O/VRuDwpyNWvYfq9p8CH984xiiI=";
+      };
+    };
+  };
+
+  mixExsVersion =
+    let
+      mixExs = builtins.readFile ../mix.exs;
+      groups = builtins.match ".*@version \"([^\"]+)\".*" mixExs;
+    in
+    builtins.elemAt groups 0;
 in
 beamPackages.buildMix {
   name = "autumn";
-  version = "0.1.0";
+  version = mixExsVersion;
   src = ../.;
 
   beamDeps = builtins.attrValues mixNixDeps;
