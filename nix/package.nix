@@ -32,7 +32,7 @@ beamPackages.buildMix {
       skip_compilation?: true
   '';
 
-  preConfigure = ''
+  postConfigure = ''
     mkdir -p priv/native
     cp ${autumnus_nif}/lib/libautumnus_nif.* priv/native/libautumnus_nif.so
 
